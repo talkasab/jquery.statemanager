@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>StateManager Test</title>
+</head>
+<body>
+    <h1>StateManager Test</h1>
+    <ul id="showState">
+        <li><strong>foo:</strong> <span id="foo"></span></li>
+        <li><strong>bar:</strong> <span id="bar"></span></li>
+        <li><strong>baz:</strong> <span id="baz"></span></li>
+    </ul>
+    <div id="buttons">
+        <input type="button" id="foowhatever" value="foo: whatever"/>
+        <input type="button" id="barelse" value="bar: else"/>
+        <input type="button" id="bazandsoon" value="baz: andsoon"/>
+    </div>
+    <div id="bigbutton">
+        <input type="button" id="changeallprops" value="Change Everything!"/>
+    </div>
+    <script src="../lib/jquery-1.8.2.min.js"></script>
+    <script src="../lib/jquery-deparam.min.js"></script>
+    <script src="../jquery.statemanager.js"></script>
+    <script type="text/javascript">
+        app = (function() {
+            var stateManager = $.StateManager({ foo: "alpha", bar: "beta", baz: "gamma" }, false),
+                stateChanged = function (changedFields) {
+                    for (var i = 0; i < changedFields.length; i++) {
+                        var field = changedFields[i];
+                        $('#' + field).text(stateManager[field]);
+                    }
+                },
+                generateTextUpdater = function(prop, newValue, defaultValue) {
+                    return function() {
+                        if (stateManager[prop]() !== defaultValue) stateManager[prop](defaultValue);
+                        else stateManager[prop](newValue);
+                    };
+                },
+                generateButtonUpdater = function(prop, newValue, defaultValue) {
+                    return function (changedValue) {
+                        var newval = (changedValue !== defaultValue)
+                            ? (prop + ': ' + defaultValue)
+                            : (prop + ': ' + newValue);
+                        $('#' + prop + newValue).prop('value', newval);
+                    };
+                },
+                setup = function() {
+                    stateManager.on(stateChanged);
+                    stateManager.on('change:foo', generateButtonUpdater("foo", "whatever", "alpha"));
+                    stateManager.on('change:bar', generateButtonUpdater("bar", "else", "beta"));
+                    stateManager.on('change:baz', generateButtonUpdater("baz", "andsoon", "gamma"));
+                    stateManager.start();
+                    $("#foowhatever").click(generateTextUpdater("foo", "whatever", "alpha"));
+                    $("#barelse").click(generateTextUpdater("bar", "else", "beta"));
+                    $("#bazandsoon").click(generateTextUpdater("baz", "andsoon", "gamma"));
+                    $("#changeallprops").click(function() {
+                        stateManager.pushState({ foo: "Washington", bar: "Lincoln", baz: "Roosevelt" });
+                    });
+                };
+            return {
+                stateManager: stateManager,
+                setup: setup
+            };
+        })();
+        $(function() {
+            app.setup();
+        });
+    </script>
+</body>
+</html>
